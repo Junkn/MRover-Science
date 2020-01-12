@@ -1,6 +1,8 @@
 import numpy as np
 import spectral as spy
 from spectral.database.ecostress import EcostressDatabase
+import random
+import matplotlib.pyplot as plt
 
 #db = spy.EcostressDatabase.create('spec_lib.db', 'ecospeclib-all') ###run only once
 
@@ -9,9 +11,11 @@ db = EcostressDatabase('spec_lib.db')
 #db.print_query('SELECT COUNT() FROM Samples WHERE Name LIKE "%e%"')      ###how many match name
 #db.print_query('SELECT SampleID, Name FROM Samples WHERE Name LIKE "%pyr%"')   ###print ID number, name for all that match name
 
-plot_it = False ###make a graph for a specific known substance
+plot_it = False
 
 import pylab as plt
+
+measured_x = [.41, .435, .46, .485, .51, .535, .56, .585, .61, .645, .68, .705, .73, .76, .81, .86, .9, .94]
 
 if plot_it:
     f = plt.figure()
@@ -32,7 +36,11 @@ if plot_it:
     
     plt.show()
     
-#test_spectra = ''
+test_spectrum = []
+for n in range(len(measured_x)):
+    test_spectrum.append(random.uniform(0,.1))
+#print(test_spectrum)
+
 spectra_list = []
 
 for n in range(1,3447):
@@ -40,7 +48,50 @@ for n in range(1,3447):
     if min(s.x)<.43:
         spectra_list.append(n)
         
-#for index in spectra_list:
-    #s = db.get_signature(index)
+####take experimental and known wavelengths, see if they're close enough
+def find_nearest(array, value):
+    array = np.asarray(array)
+    idx = (np.abs(array - value)).argmin()
+    return(array[idx])
+
+def compare(exp_spectrum, known_spectrum, exp_wavelengths, known_wavelengths, epsilon):
+    for x in range(len(exp_wavelengths)):
+        known_value = known_spectrum[known_wavelengths.index(find_nearest(known_wavelengths, exp_wavelengths[x]))]
+        diff = known_value - exp_spectrum[x]
+        if diff > epsilon:
+            return False
+    return True
+
+"""takes a list of spectra, and returns a list of spectra that fit compare criteria
+within epsilon of experimental values.
+ """
+def prune_spectra(spectra_in, epsilon, measured_x, experimental_spectrum):
+    spectra_out = []
+    for value in spectra_in:
+        spec = db.get_signature(value)
+        if (compare(experimental_spectrum, spec.y, measured_x, spec.x, epsilon)):
+            spectra_out.append(value)
+    return spectra_out
+
+eps = 1
+d_eps = .01
+results_ind = []
+old_spectra_out = spectra_list
     
-print('Done')    
+while len(old_spectra_out) > 5:
+    spectra_out = prune_spectra(old_spectra_out, eps, measured_x, test_spectrum)
+    if len(spectra_out)==0:
+        eps += d_eps/10
+    if len(spectra_out)>5:
+        eps -= d_eps
+        old_spectra_out = spectra_out
+    if 0<len(spectra_out)<5:
+        old_spectra_out = spectra_out
+    
+###make plots for each returned spectrum vs data
+for n in range(len(spectra_out)):
+    fig = plt.figure(n)
+    spec = db.get_signature(spectra_out[n])
+    plt.plot(spec.x[spec.x.index(find_nearest(spec.x, .41)):spec.x.index(find_nearest(spec.x, .94))], spec.y[spec.x.index(find_nearest(spec.x, .41)):spec.x.index(find_nearest(spec.x, .94))])
+    plt.plot(measured_x, test_spectrum)
+    plt.title(spec.sample_name)  
