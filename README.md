@@ -1,7 +1,12 @@
 # MRover-Science
 
 ##Libraries needed:
-Python3 pip install spectral /n
 
-Currently we have working code for: /n
-Reflectance spectroscopy
+Python3 pip install spectral 
+
+
+Currently we are working on code for: 
+
+Reflectance spectroscopy Analysis
+
+
