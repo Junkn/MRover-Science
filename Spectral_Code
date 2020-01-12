@@ -1,0 +1,46 @@
+import numpy as np
+import spectral as spy
+from spectral.database.ecostress import EcostressDatabase
+
+#db = spy.EcostressDatabase.create('spec_lib.db', 'ecospeclib-all') ###run only once
+
+db = EcostressDatabase('spec_lib.db')
+
+#db.print_query('SELECT COUNT() FROM Samples WHERE Name LIKE "%e%"')      ###how many match name
+#db.print_query('SELECT SampleID, Name FROM Samples WHERE Name LIKE "%pyr%"')   ###print ID number, name for all that match name
+
+plot_it = False ###make a graph for a specific known substance
+
+import pylab as plt
+
+if plot_it:
+    f = plt.figure()
+
+    s = db.get_signature(1333)
+
+    import pylab as plt
+
+    plt.plot(s.x, s.y)
+    print(len(s.x))
+    
+    plt.title(s.sample_name)
+
+    plt.xlabel('Wavelength (μm)')
+    plt.ylabel('Reflectance (%)')
+
+    plt.grid(1)
+    
+    plt.show()
+    
+#test_spectra = ''
+spectra_list = []
+
+for n in range(1,3447):
+    s = db.get_signature(n)
+    if min(s.x)<.43:
+        spectra_list.append(n)
+        
+#for index in spectra_list:
+    #s = db.get_signature(index)
+    
+print('Done')    
